@@ -5,32 +5,33 @@
 
 #include <functional>
 #include <unordered_set>
+#include <set>
 
 class Sheet;
 
 class Cell : public CellInterface {
-public:
-    Cell(Sheet& sheet);
-    ~Cell();
-
-    void Set(std::string text);
-    void Clear();
-
-    Value GetValue() const override;
-    std::string GetText() const override;
-    std::vector<Position> GetReferencedCells() const override;
-
-    bool IsReferenced() const;
-
 private:
     class Impl;
     class EmptyImpl;
     class TextImpl;
     class FormulaImpl;
-
+    std::unordered_set<Cell*> parents_;
+    std::unordered_set<Cell*> children_;
     std::unique_ptr<Impl> impl_;
+    SheetInterface& sheet_;
+    Position pos_;
 
-    // Добавьте поля и методы для связи с таблицей, проверки циклических 
-    // зависимостей, графа зависимостей и т. д.
+public:
+    Cell(SheetInterface& sheet, Position& pos);
+    ~Cell() override;
+    void Set(std::string text);
+    Value GetValue() const override;
+    std::string GetText() const override;
+    void Clear();
+    std::vector<Position> GetReferencedCells() const override;
 
+private:
+    bool IsReferenced() const;
+    void UpdateReferences();
+    void TraverseThroughGraph(std::vector<Position> references, Cell* root);
 };
